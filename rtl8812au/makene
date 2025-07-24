@@ -1,0 +1,121 @@
+ifneq ($(KERNELRELEASE),)
+
+DESTDIR	=
+MODDIR	= $(DESTDIR)/lib/modules
+KVERS	= $(shell uname -r)
+KVER	= $(KVERS)
+VMODDIR = $(MODDIR)/$(KVER)
+KSRC	?= /lib/modules/$(shell uname -r)/build
+
+obj-m := 8812au.o
+8812au-objs += core/rtw_cmd.o \
+		core/rtw_security.o \
+		core/rtw_debug.o \
+		core/rtw_io.o \
+		core/rtw_ioctl_query.o \
+		core/rtw_ioctl_set.o \
+		core/rtw_ieee80211.o \
+		core/rtw_mlme.o \
+		core/rtw_mlme_ext.o \
+		core/rtw_mi.o \
+		core/rtw_wlan_util.o \
+		core/rtw_vht.o \
+		core/rtw_pwrctrl.o \
+		core/rtw_rf.o \
+		core/rtw_chplan.o \
+		core/rtw_recv.o \
+		core/rtw_sta_mgt.o \
+		core/rtw_ap.o \
+		core/mesh/rtw_mesh.o \
+		core/mesh/rtw_mesh_pathtbl.o \
+		core/mesh/rtw_mesh_hwmp.o \
+		core/rtw_xmit.o	\
+		core/rtw_p2p.o \
+		core/rtw_rson.o \
+		core/rtw_tdls.o \
+		core/rtw_br_ext.o \
+		core/rtw_iol.o \
+		core/rtw_sreset.o \
+		core/rtw_btcoex_wifionly.o \
+		core/rtw_btcoex.o \
+		core/rtw_beamforming.o \
+		core/rtw_odm.o \
+		core/rtw_rm.o \
+		core/rtw_rm_fsm.o \
+		core/efuse/rtw_efuse.o \
+		os_dep/osdep_service.o \
+		os_dep/linux/os_intfs.o \
+		os_dep/linux/usb_intf.o \
+		os_dep/linux/usb_ops_linux.o \
+		os_dep/linux/ioctl_linux.o \
+		os_dep/linux/xmit_linux.o \
+		os_dep/linux/mlme_linux.o \
+		os_dep/linux/recv_linux.o \
+		os_dep/linux/ioctl_cfg80211.o \
+		os_dep/linux/wifi_regd.o \
+		os_dep/linux/rtw_android.o \
+		os_dep/linux/rtw_proc.o \
+		os_dep/linux/rtw_rhashtable.o \
+		hal/hal_intf.o \
+		hal/hal_com.o \
+		hal/hal_com_phycfg.o \
+		hal/hal_phy.o \
+		hal/hal_dm.o \
+		hal/hal_dm_acs.o \
+		hal/hal_btcoex_wifionly.o \
+		hal/hal_btcoex.o \
+		hal/hal_mp.o \
+		hal/hal_mcc.o \
+		hal/hal_hci/hal_usb.o \
+		hal/led/hal_led.o \
+		hal/led/hal_usb_led.o \
+		hal/HalPwrSeqCmd.o \
+		hal/rtl8812a/Hal8812PwrSeq.o \
+		hal/rtl8812a/Hal8821APwrSeq.o\
+		hal/rtl8812a/rtl8812a_xmit.o\
+		hal/rtl8812a/rtl8812a_sreset.o \
+		hal/rtl8812a/rtl8812a_hal_init.o \
+		hal/rtl8812a/rtl8812a_phycfg.o \
+		hal/rtl8812a/rtl8812a_rf6052.o \
+		hal/rtl8812a/rtl8812a_dm.o \
+		hal/rtl8812a/rtl8812a_rxdesc.o \
+		hal/rtl8812a/rtl8812a_cmd.o \
+		hal/rtl8812a/usb/usb_halinit.o \
+		hal/rtl8812a/usb/rtl8812au_led.o \
+		hal/rtl8812a/usb/rtl8812au_xmit.o \
+		hal/rtl8812a/usb/rtl8812au_recv.o \
+		hal/rtl8812a/usb/usb_ops_linux.o \
+		hal/efuse/rtl8812a/HalEfuseMask8812A_USB.o \
+		hal/btc/halbtc8812a1ant.o \
+		hal/btc/halbtc8812a2ant.o \
+		hal/rtl8812a/hal8812a_fw.o 
+
+
+EXTRA_CFLAGS := -I$(src)/include
+
+else
+
+DESTDIR	=
+MODDIR	= $(DESTDIR)/lib/modules
+KVERS	= $(shell uname -r)
+KVER	= $(KVERS)
+VMODDIR = $(MODDIR)/$(KVER)
+KSRC	?= /lib/modules/$(shell uname -r)/build
+
+default: 
+	make -C $(KSRC) M=$(PWD) modules
+
+clean:
+	cd hal ; rm -fr */*/*/*.mod.c */*/*/*.mod */*/*/*.o */*/*/.*.cmd */*/*/*.ko
+	cd hal ; rm -fr */*/*.mod.c */*/*.mod */*/*.o */*/.*.cmd */*/*.ko
+	cd hal ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko
+	cd hal ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	cd core ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko
+	cd core ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	cd os_dep/linux ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko *.o.d
+	cd os_dep ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	cd platform ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	rm -fr Module.symvers ; rm -fr Module.markers ; rm -fr modules.order
+	rm -fr *.mod.c *.mod *.o .*.cmd *.ko *~
+	rm -fr .tmp_versions
+endif
