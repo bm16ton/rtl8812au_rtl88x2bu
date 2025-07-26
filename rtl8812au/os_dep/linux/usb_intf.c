@@ -345,100 +345,6 @@ exit:
 
 }
 
-static ssize_t usbss_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct dvobj_priv *dvobj = dev_get_drvdata(dev);
-	struct usb_interface *usb_intf = container_of(dev, struct usb_interface, dev);
-//	dvobj = usb_get_intfdata(usb_intf);
-	_adapter *padapter = NULL;
-	padapter = dvobj_get_primary_adapter(dvobj);
-	struct registry_priv  *registry_par = &padapter->registrypriv;
-
-//	registry_par->switch_usb_mode = (u8)buf;
-//	printk("usb mode switch = %hhu\n", (u8)buf);
-	if (registry_par->switch_usb_mode == 0) {
-		seq_printf(s, "Value 0 = Dont Switch\n");
-	} else if (registry_par->switch_usb_mode == 1) {
-		seq_printf(s, "Value 1 = Switch from usb2 to usb3\n");
-	} else if (registry_par->switch_usb_mode == 2) {
-		seq_printf(s, "Value 2 = Switch from usb3 to usb2\n");
-	}
-
-	seq_puts(s, "}\n");
-//		return scnprintf(buf, PAGE_SIZE, "%d\n", ret2);
-}
-
-/*
-** This function will be called when we write the sysfsfs file
-*/
-
-
-
-static ssize_t usbss_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *valbuf, size_t count)
-{
-	struct dvobj_priv *dvobj = dev_get_drvdata(dev);
-	struct usb_interface *usb_intf = container_of(dev, struct usb_interface, dev);
-//	dvobj = usb_get_intfdata(usb_intf);
-	_adapter *padapter = NULL;
-	padapter = dvobj_get_primary_adapter(dvobj);
-	struct registry_priv  *registry_par = &padapter->registrypriv;
-	int status = 0;
-	int ret = 0;
-	u8 *val;
-	registry_par->switch_usb_mode = (u8)buf;
-	printk("usb mode switch = %hhu\n", (u8)buf);
-
-	if ((u8)buf == 1) {
-		if (IS_HIGH_SPEED_USB(padapter)) {
-			rtw_usb_primary_adapter_deinit(padapter);
-			usb_dvobj_deinit(pusb_intf);
-			registry_par->switch_usb_mode == 1;
-			status = rtw_halmac_switch_usb_mode(adapter_to_dvobj(padapter), RTW_USB_SPEED_3);
-			if (status)
-				*val = _TRUE;
-		}
-	} else if ((u8)buf == 2) {
-		/* U3 to U2 */
-		if (IS_SUPER_SPEED_USB(padapter)) {
-			rtw_usb_primary_adapter_deinit(padapter);
-			usb_dvobj_deinit(pusb_intf);
-			registry_par->switch_usb_mode == 2;
-			status = rtw_halmac_switch_usb_mode(adapter_to_dvobj(padapter), RTW_USB_SPEED_2);
-			if (status)
-				*val = _TRUE;
-		}
-	} else {
-		printk("Value out of range valid values 1 or 2\n");
-		return count;
-	}
-	
-	ret = rtl8822b_sethwreg(padapter, HW_VAR_USB_MODE, val);
-	if (ret) {
-	;
-	}
-        return count;
-}
-static DEVICE_ATTR_RW(usbss);
-
-static int create_sysfs_attrs(struct usb_interface *interface)
-{
-	int retval = 0;
-
-			retval = device_create_file(&interface->dev,
-						    &dev_attr_usbss);
-
-	return retval;
-}
-
-static void remove_sysfs_attrs(struct usb_interface *interface)
-{
-
-			device_remove_file(&interface->dev, &dev_attr_usbss);
-}
-
 static u8 rtw_deinit_intf_priv(struct dvobj_priv *dvobj)
 {
 	u8 rst = _SUCCESS;
@@ -1547,12 +1453,6 @@ static int rtw_drv_init(struct usb_interface *pusb_intf, const struct usb_device
 	}
 #endif
 
-	int poo = create_sysfs_attrs(pusb_intf);
-	if(poo) {
-	;
-	}
-
-
 #ifdef CONFIG_INTEL_PROXIM
 	rtw_sw_export = padapter;
 #endif
@@ -1620,10 +1520,6 @@ static void rtw_dev_remove(struct usb_interface *pusb_intf)
 
 	dvobj->processing_dev_remove = _TRUE;
 
-	int poo = remove_sysfs_attrs(pusb_intf);
-	if (poo) {
-	;
-	}
 	/* TODO: use rtw_os_ndevs_deinit instead at the first stage of driver's dev deinit function */
 	rtw_os_ndevs_unregister(dvobj);
 
