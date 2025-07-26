@@ -18,7 +18,11 @@
 #include <hal_data.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/debugfs.h>
 #include <platform_ops.h>
+#include "../../hal/hal_halmac.h"
+#include "../../hal/rtl8822b/rtl8822b.h"
+#include "../../hal/halmac/halmac_88xx/halmac_fw_88xx.h"
 
 #ifndef CONFIG_USB_HCI
 #error "CONFIG_USB_HCI shall be on!\n"
@@ -33,20 +37,98 @@ extern int rtw_ampdu_enable;/* for enable tx_ampdu */
 #ifdef CONFIG_GLOBAL_UI_PID
 int ui_pid[3] = {0, 0, 0};
 #endif
-
-
+   
 extern int pm_netdev_open(struct net_device *pnetdev, u8 bnormal);
 static int rtw_suspend(struct usb_interface *intf, pm_message_t message);
 static int rtw_resume(struct usb_interface *intf);
 
+_adapter *rtw_usb_primary_adapter_init(struct dvobj_priv *dvobj, struct usb_interface *pusb_intf);
 
 static int rtw_drv_init(struct usb_interface *pusb_intf, const struct usb_device_id *pdid);
 static void rtw_dev_remove(struct usb_interface *pusb_intf);
+static void rtw_usb_primary_adapter_deinit(_adapter *padapter);
+static void usb_dvobj_deinit(struct usb_interface *usb_intf);
+
+static ssize_t usbss_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct dvobj_priv *dvobj = dev_get_drvdata(dev);
+//	struct usb_interface *usb_intf = container_of(dev, struct usb_interface, dev);
+//	dvobj = usb_get_intfdata(usb_intf);
+	_adapter *padapter = NULL;
+	padapter = dvobj_get_primary_adapter(dvobj);
+//	struct registry_priv  *registry_par = &padapter->registrypriv;
+	char poo[] = "Value not set! range out of bounds? ";
+	if (IS_HIGH_SPEED_USB(padapter)) {
+	 char poo2[] = "88X2BU is currently USB2 highspeed";
+	 memcpy(poo, poo2, strlen(poo2) + 1);
+	} else if (IS_SUPER_SPEED_USB(padapter)) {
+	 char poo2[] = "88X2BU is currently USB3 superspeed";
+	 memcpy(poo, poo2, strlen(poo2) + 1);
+	}
+
+		return scnprintf(buf, PAGE_SIZE, "%s\n", poo);
+}
+
+extern int rtw_switch_usb_mode;
+
+static ssize_t usbss_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *valbuf, size_t count)
+{
+	struct dvobj_priv *dvobj = dev_get_drvdata(dev);
+	_adapter *padapter = NULL;
+	padapter = dvobj_get_primary_adapter(dvobj);
+	struct registry_priv  *registry_par = &padapter->registrypriv;
+	unsigned int  newval = 0;
+
+	if (kstrtouint(valbuf, 10, &newval))
+		return -EINVAL;
+
+	registry_par->switch_usb_mode = newval;
+	printk("usb mode switch = %hhu\n", newval);
+
+	if (newval == 1) {
+		if (IS_HIGH_SPEED_USB(padapter)) {
+			rtw_switch_usb_mode = 1;
+			registry_par->switch_usb_mode = 1;
+			rtw_halmac_switch_usb_mode(dvobj, RTW_USB_SPEED_3);
+		}
+	} else if (newval == 2) {
+		/* U3 to U2 */
+		if (IS_SUPER_SPEED_USB(padapter)) {
+			rtw_switch_usb_mode = 2;
+			registry_par->switch_usb_mode = 2;
+			rtw_halmac_switch_usb_mode(dvobj, RTW_USB_SPEED_2);
+		}
+	} else {
+		printk("Value out of range valid values 1 or 2\n");
+	}
+
+        return count;
+}
+static DEVICE_ATTR_RW(usbss);
+
+static int create_sysfs_attrs(struct usb_interface *interface)
+{
+	int retval = 0;
+
+			retval = device_create_file(&interface->dev,
+						    &dev_attr_usbss);
+
+	return retval;
+}
+
+static void remove_sysfs_attrs(struct usb_interface *interface)
+{
+
+			device_remove_file(&interface->dev, &dev_attr_usbss);
+}
+
 
 static void rtw_dev_shutdown(struct device *dev)
 {
 	struct usb_interface *usb_intf = container_of(dev, struct usb_interface, dev);
-	struct usb_device *udev = interface_to_usbdev(usb_intf);
 	struct dvobj_priv *dvobj = NULL;
 	_adapter *adapter = NULL;
 
@@ -71,12 +153,6 @@ static void rtw_dev_shutdown(struct device *dev)
 						RTW_PRINT("%s wowlan_mode ==_TRUE do not run rtw_hal_deinit()\n", __FUNCTION__);
 					else
 					#endif
-//					unsigned int refcount = module_refcount(THIS_MODULE);
-		//			usb_dev_get(dev);
-//					kref_get(&dvobj->kref);
-//					usb_get_dev(udev);
-//					printk("rtw_dev_shutdown refcount = %u\n", refcount);
-//					usb_get_dev(udev);
 					{
 						rtw_hal_deinit(adapter);
 						rtw_set_surprise_removed(adapter);
@@ -1527,6 +1603,12 @@ static int rtw_drv_init(struct usb_interface *pusb_intf, const struct usb_device
 	}
 #endif
 
+	int poo = create_sysfs_attrs(pusb_intf);
+	if(poo) {
+	;
+	}
+
+
 #ifdef CONFIG_GLOBAL_UI_PID
 	if (ui_pid[1] != 0) {
 		RTW_INFO("ui_pid[1]:%d\n", ui_pid[1]);
@@ -1595,6 +1677,8 @@ static void rtw_dev_remove(struct usb_interface *pusb_intf)
 	pm_runtime_get_sync(dev);
 	dvobj->processing_dev_remove = _TRUE;
 	
+	remove_sysfs_attrs(pusb_intf);
+
 	/* TODO: use rtw_os_ndevs_deinit instead at the first stage of driver's dev deinit function */
 	rtw_os_ndevs_unregister(dvobj);
 

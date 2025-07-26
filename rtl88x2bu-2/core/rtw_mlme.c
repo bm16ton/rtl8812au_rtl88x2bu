@@ -19,6 +19,11 @@
 extern void indicate_wx_scan_complete_event(_adapter *padapter);
 extern u8 rtw_do_join(_adapter *padapter);
 
+void rtw_init_mlme_timer(_adapter *padapter);
+sint	_rtw_init_mlme_priv(_adapter *padapter);
+void _rtw_free_mlme_priv(struct mlme_priv *pmlmepriv);
+sint    _rtw_enqueue_network(_queue *queue, struct wlan_network *pnetwork);
+void rtw_reset_rx_info(_adapter *adapter);
 
 void rtw_init_mlme_timer(_adapter *padapter)
 {
@@ -297,7 +302,7 @@ exit:
 
 void _rtw_free_mlme_priv(struct mlme_priv *pmlmepriv)
 {
-	_adapter *adapter = mlme_to_adapter(pmlmepriv);
+//	_adapter *adapter = mlme_to_adapter(pmlmepriv);
 	if (NULL == pmlmepriv) {
 		rtw_warn_on(1);
 		goto exit;
@@ -1563,7 +1568,9 @@ exit:
 void rtw_surveydone_event_callback(_adapter	*adapter, u8 *pbuf)
 {
 	_irqL  irqL;
+#ifdef CONFIG_RTW_ACS
 	struct surveydone_event *parm = (struct surveydone_event *)pbuf;
+#endif
 	struct	mlme_priv	*pmlmepriv = &(adapter->mlmepriv);
 #ifdef CONFIG_RTW_80211R
 	struct mlme_ext_priv	*pmlmeext = &adapter->mlmeextpriv;
@@ -1749,8 +1756,9 @@ u8 _rtw_sitesurvey_condition_check(const char *caller, _adapter *adapter, bool c
 {
 	u8 ss_condition = SS_ALLOW;
 	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
+#if  defined(DBG_LA_MODE) || defined(CONFIG_ADAPTIVITY_DENY_SCAN)
 	struct registry_priv *registry_par = &adapter->registrypriv;
-
+#endif
 
 #ifdef CONFIG_MP_INCLUDED
 	if (rtw_mp_mode_check(adapter)) {

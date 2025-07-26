@@ -138,6 +138,12 @@ static const char *const _rate_section_str[] = {
 	"RATE_SECTION_UNKNOWN",
 };
 
+void rtw_filter_suppport_rateie(WLAN_BSSID_EX *pbss_network, u8 keep);
+u32 rtw_get_akm_suite_bitmap(u8 *s);
+void dump_ht_cap_ie(void *sel, const u8 *ie, u32 ie_len);
+void dump_ht_op_ie_content(void *sel, const u8 *buf, u32 buf_len);
+void dump_ht_op_ie(void *sel, const u8 *ie, u32 ie_len);
+
 const char *rate_section_str(u8 section)
 {
 	section = (section >= RATE_SECTION_NUM) ? RATE_SECTION_NUM : section;

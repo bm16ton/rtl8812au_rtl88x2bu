@@ -163,6 +163,8 @@ typedef struct _ADAPTER _adapter, ADAPTER, *PADAPTER;
 #define SPEC_DEV_ID_RF_CONFIG_2T2R BIT(4)
 #define SPEC_DEV_ID_ASSIGN_IFNAME BIT(5)
 
+extern int rtw_switch_usb_mode;
+
 struct specific_device_id {
 
 	u32		flags;

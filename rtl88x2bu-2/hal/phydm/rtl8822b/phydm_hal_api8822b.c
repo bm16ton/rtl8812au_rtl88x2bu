@@ -750,9 +750,9 @@ phydm_rfe_8822b_lps(struct dm_struct *dm, boolean enable_sw_rfe)
 __iram_odm_func__
 u8 phydm_is_dfs_channel(u8 channel_num)
 {
-	if (channel_num >= 52 && channel_num <= 140)
-		return 1;
-	else
+//	if (channel_num >= 52 && channel_num <= 140)
+//		return 1;
+//	else
 		return 0;
 }
 

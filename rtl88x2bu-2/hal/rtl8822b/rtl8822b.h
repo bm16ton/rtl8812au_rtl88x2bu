@@ -41,7 +41,6 @@ struct hw_port_reg {
 	u32	ta;			/*reg_offset*/
 };
 
-
 /* rtl8822b_halinit.c */
 void rtl8822b_init_hal_spec(PADAPTER);
 u32 rtl8822b_power_on(PADAPTER);

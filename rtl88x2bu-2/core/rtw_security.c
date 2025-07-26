@@ -106,6 +106,8 @@ const char *security_type_str(u8 value)
 
 #define CRC32_POLY 0x04c11db7
 
+int omac1_aes_128(const u8 *key, const u8 *data, size_t data_len, u8 *mac);
+
 struct arc4context {
 	u32 x;
 	u32 y;

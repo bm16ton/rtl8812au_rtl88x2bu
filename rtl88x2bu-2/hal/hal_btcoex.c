@@ -216,6 +216,8 @@ BTCDBGINFO GLBtcDbgInfo;
 
 #define	BT_Operation(Adapter)						_FALSE
 
+u32 halbtcoutsrc_Read4Byte(void *pBtcContext, u32 RegAddr);
+
 static void DBG_BT_INFO_INIT(PBTCDBGINFO pinfo, u8 *pbuf, u32 size)
 {
 	if (NULL == pinfo)

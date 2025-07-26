@@ -960,6 +960,7 @@ uint rtw_suspend_type = RTW_SUSPEND_TYPE;
 module_param(rtw_suspend_type, uint, 0644);
 #endif
 
+
 #if CONFIG_TX_AC_LIFETIME
 static void rtw_regsty_load_tx_ac_lifetime(struct registry_priv *regsty)
 {
@@ -3774,8 +3775,7 @@ int _netdev_open(struct net_device *pnetdev)
 	} else
 		RTW_INFO("CONFIG_BT_COEXIST: VIRTUAL_ADAPTER\n");
 #endif /* CONFIG_BT_COEXIST_SOCKET_TRX */
-	unsigned int refcount = module_refcount(THIS_MODULE);
-	printk("pm_netdev_close refcount = %u\n", refcount);
+
 #ifdef CONFIG_AUTOSUSPEND
 netdev_open_normal_process:
 #endif
@@ -3895,9 +3895,6 @@ int  ips_netdrv_open(_adapter *padapter)
 	rtw_set_pwr_state_check_timer(adapter_to_pwrctl(padapter));
 #endif
 	_set_timer(&adapter_to_dvobj(padapter)->dynamic_chk_timer, 2000);
-
-	unsigned int refcount = module_refcount(THIS_MODULE);
-	printk("pm_netdev_open refcount = %u\n", refcount);
 
 	return _SUCCESS;
 
@@ -4203,11 +4200,9 @@ static int netdev_close(struct net_device *pnetdev)
 int pm_netdev_close(struct net_device *pnetdev, u8 bnormal)
 {
 	int status = 0;
-	unsigned int refcount = module_refcount(THIS_MODULE);
-	printk("pm_netdev_close refcount = %u\n", refcount);
+
 	dev_put(pnetdev);
-	refcount = module_refcount(THIS_MODULE);
-	printk("pm_netdev_close after put refcount = %u\n", refcount);
+
 	status = netdev_close(pnetdev);
 
 	return status;
